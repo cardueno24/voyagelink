@@ -2,7 +2,9 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
+import Shipments from './pages/Shipments'
 import Forecasting from './pages/Forecasting'
+import AIAssistant from './pages/AIAssistant'
 
 export default function App() {
   return (
@@ -10,9 +12,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/shipments" element={<div className="text-gray-400 text-sm p-4">Shipments — coming soon</div>} />
+        <Route path="/shipments" element={<Shipments />} />
         <Route path="/forecasting" element={<Forecasting />} />
-        <Route path="/ai" element={<div className="text-gray-400 text-sm p-4">AI Assistant — coming soon</div>} />
+        <Route path="/ai" element={<AIAssistant />} />
       </Routes>
     </Layout>
   )
