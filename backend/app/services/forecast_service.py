@@ -36,4 +36,7 @@ Format clearly so a supply chain manager can act on it immediately."""
 
 def generate_forecast(product: dict, transactions: list[dict]) -> str:
     prompt = build_forecast_prompt(product, transactions)
-    return chat_completion([{"role": "user", "content": prompt}])
+    try:
+        return chat_completion([{"role": "user", "content": prompt}])
+    except Exception:
+        return "Forecast unavailable: AI service error. Please check your API key configuration."

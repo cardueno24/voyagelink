@@ -6,11 +6,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth import verify_token
 from app.database import get_db
 from app.models.shipment import Shipment, ShipmentEvent
 from app.schemas.shipment import ShipmentCreate, ShipmentUpdate, ShipmentOut, ShipmentEventCreate, ShipmentEventOut
 
-router = APIRouter(prefix="/api/shipments", tags=["Shipments"])
+router = APIRouter(prefix="/api/shipments", tags=["Shipments"], dependencies=[Depends(verify_token)])
 
 
 def generate_tracking_number() -> str:
@@ -23,6 +24,8 @@ def generate_tracking_number() -> str:
 def list_shipments(
     status: Optional[str] = Query(None),
     carrier: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
     query = db.query(Shipment)
@@ -30,7 +33,7 @@ def list_shipments(
         query = query.filter(Shipment.status == status)
     if carrier:
         query = query.filter(Shipment.carrier == carrier)
-    return query.order_by(Shipment.updated_at.desc()).all()
+    return query.order_by(Shipment.updated_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.post("", response_model=ShipmentOut, status_code=201)

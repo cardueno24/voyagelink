@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     openrouter_model: str = "openai/gpt-4o-mini"
     database_url: str = "sqlite:///./voyagelink.db"
     cors_origins: List[str] = ["http://localhost:5173"]
+    admin_username: str = "admin"
+    admin_password: str = "voyagelink"
+    jwt_secret: str = "change-this-in-production-use-a-long-random-string"
+    jwt_expiry_hours: int = 24
 
     class Config:
         env_file = ".env"

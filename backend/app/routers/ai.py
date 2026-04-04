@@ -3,18 +3,18 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth import verify_token
 from app.database import get_db
 from app.models.inventory import AIConversation, Product, InventoryTransaction
 from app.schemas.inventory import ChatRequest
 from app.services.ai_service import chat_completion, settings
 from app.services.forecast_service import generate_forecast
 
-router = APIRouter(prefix="/api/ai", tags=["AI"])
+router = APIRouter(prefix="/api/ai", tags=["AI"], dependencies=[Depends(verify_token)])
 
 
 @router.post("/chat")
 def chat(payload: ChatRequest, db: Session = Depends(get_db)):
-    # Load conversation history
     history = (
         db.query(AIConversation)
         .filter(AIConversation.session_id == payload.session_id)
@@ -24,9 +24,11 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     messages = [{"role": r.role, "content": r.content} for r in history]
     messages.append({"role": "user", "content": payload.message})
 
-    reply = chat_completion(messages)
+    try:
+        reply = chat_completion(messages)
+    except Exception:
+        raise HTTPException(status_code=503, detail="AI service unavailable. Check your API key configuration.")
 
-    # Persist both turns
     db.add(AIConversation(session_id=payload.session_id, role="user", content=payload.message))
     db.add(AIConversation(
         session_id=payload.session_id,
@@ -65,23 +67,14 @@ def forecast_product(product_id: int, db: Session = Depends(get_db)):
     )
 
     product_dict = {
-        "id": product.id,
-        "sku": product.sku,
-        "name": product.name,
-        "category": product.category,
-        "current_stock": product.current_stock,
-        "reorder_point": product.reorder_point,
-        "reorder_quantity": product.reorder_quantity,
-        "unit_cost": product.unit_cost,
-        "supplier": product.supplier,
+        "id": product.id, "sku": product.sku, "name": product.name,
+        "category": product.category, "current_stock": product.current_stock,
+        "reorder_point": product.reorder_point, "reorder_quantity": product.reorder_quantity,
+        "unit_cost": product.unit_cost, "supplier": product.supplier,
         "lead_time_days": product.lead_time_days,
     }
     tx_list = [
-        {
-            "timestamp": str(t.timestamp),
-            "transaction_type": t.transaction_type,
-            "quantity": t.quantity,
-        }
+        {"timestamp": str(t.timestamp), "transaction_type": t.transaction_type, "quantity": t.quantity}
         for t in transactions
     ]
 

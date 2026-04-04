@@ -16,8 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import shipments, inventory, ai, dashboard  # noqa: E402
+from app.routers import auth, shipments, inventory, ai, dashboard  # noqa: E402
 
+app.include_router(auth.router)
 app.include_router(shipments.router)
 app.include_router(inventory.router)
 app.include_router(ai.router)

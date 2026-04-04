@@ -5,6 +5,7 @@ import {
   useShipment,
   useCreateShipment,
   useAddShipmentEvent,
+  PAGE_SIZE,
 } from '../hooks/useShipments'
 import MetricCard from '../components/ui/MetricCard'
 import StatusBadge from '../components/ui/StatusBadge'
@@ -283,10 +284,11 @@ function ShipmentDetailModal({ shipmentId, onClose }) {
 export default function Shipments() {
   const [filters, setFilters] = useState({ status: '', carrier: '' })
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
   const [detailId, setDetailId] = useState(null)
 
-  const { data: shipments = [], isLoading, error } = useShipments(filters)
+  const { data: shipments = [], isLoading, error } = useShipments({ ...filters, page })
 
   // Client-side search
   const filtered = shipments.filter((s) => {
@@ -348,13 +350,13 @@ export default function Shipments() {
             type="search"
             placeholder="Search by tracking #, carrier, or route…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <select
           value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+          onChange={(e) => { setFilters((f) => ({ ...f, status: e.target.value })); setPage(1) }}
           className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         >
           <option value="">All Statuses</option>
@@ -364,7 +366,7 @@ export default function Shipments() {
         </select>
         {(search || filters.status) && (
           <button
-            onClick={() => { setSearch(''); setFilters({ status: '', carrier: '' }) }}
+            onClick={() => { setSearch(''); setFilters({ status: '', carrier: '' }); setPage(1) }}
             className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
           >
             <X size={12} /> Clear
@@ -439,9 +441,27 @@ export default function Shipments() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 mt-2 text-right">
-        Showing {filtered.length} of {shipments.length} shipment{shipments.length !== 1 ? 's' : ''}
-      </p>
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-xs text-gray-400">
+          Page {page} · {filtered.length} of {shipments.length} shipment{shipments.length !== 1 ? 's' : ''} on this page
+        </p>
+        <div className="flex gap-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            ← Prev
+          </button>
+          <button
+            disabled={shipments.length < PAGE_SIZE}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
 
       {/* Modals */}
       {showCreate && <CreateShipmentModal onClose={() => setShowCreate(false)} />}

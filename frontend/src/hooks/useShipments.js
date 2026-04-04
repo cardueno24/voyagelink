@@ -1,10 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
+export const PAGE_SIZE = 50
+
 export function useShipments(filters = {}) {
   const params = new URLSearchParams()
   if (filters.status) params.set('status', filters.status)
   if (filters.carrier) params.set('carrier', filters.carrier)
+  const page = filters.page || 1
+  params.set('skip', (page - 1) * PAGE_SIZE)
+  params.set('limit', PAGE_SIZE)
   return useQuery({
     queryKey: ['shipments', filters],
     queryFn: () => api.get(`/shipments?${params}`),

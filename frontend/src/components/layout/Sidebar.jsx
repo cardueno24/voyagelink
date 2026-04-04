@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Truck, Package, TrendingUp, Bot, Anchor } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Truck, Package, TrendingUp, Bot, Anchor, LogOut } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -10,6 +11,14 @@ const links = [
 ]
 
 export default function Sidebar() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <aside className="w-56 bg-[#0F172A] text-white flex flex-col min-h-screen border-r border-slate-800">
       <div className="p-5 border-b border-slate-800">
@@ -40,8 +49,14 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="p-4 border-t border-slate-800">
-        <p className="text-slate-600 text-xs">© 2025 VoyageLink</p>
+      <div className="p-3 border-t border-slate-800">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-all duration-150 cursor-pointer"
+        >
+          <LogOut size={16} />
+          Sign Out
+        </button>
       </div>
     </aside>
   )

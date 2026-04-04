@@ -1,21 +1,20 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.auth import verify_token
 from app.database import get_db
 from app.models.shipment import Shipment
 from app.models.inventory import Product
 
-router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
+router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"], dependencies=[Depends(verify_token)])
 
 
 @router.get("/metrics")
 def get_metrics(db: Session = Depends(get_db)):
-    # Shipment metrics
     statuses = ["pending", "in_transit", "customs", "delivered", "delayed"]
     shipment_counts = {s: db.query(Shipment).filter(Shipment.status == s).count() for s in statuses}
     total_shipments = db.query(Shipment).count()
 
-    # Recent shipments (last 5)
     recent_shipments = (
         db.query(Shipment)
         .order_by(Shipment.updated_at.desc())
@@ -23,7 +22,6 @@ def get_metrics(db: Session = Depends(get_db)):
         .all()
     )
 
-    # Inventory metrics
     products = db.query(Product).all()
     total_skus = len(products)
     alert_count = sum(1 for p in products if p.current_stock <= p.reorder_point)

@@ -6,6 +6,7 @@ import {
   useCreateProduct,
   useUpdateProduct,
   useAddTransaction,
+  PAGE_SIZE,
 } from '../hooks/useInventory'
 import MetricCard from '../components/ui/MetricCard'
 import StockBar from '../components/inventory/StockBar'
@@ -217,12 +218,13 @@ function AdjustStockModal({ product, onClose }) {
 export default function Inventory() {
   const [filters, setFilters] = useState({ category: '', lowStock: false })
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
   const [showAdd, setShowAdd] = useState(false)
   const [adjusting, setAdjusting] = useState(null) // product being adjusted
 
-  const { data: products = [], isLoading, error } = useProducts(filters)
+  const { data: products = [], isLoading, error } = useProducts({ ...filters, page })
   const { data: alerts = [] } = useAlerts()
 
   // Client-side search + sort
@@ -314,14 +316,14 @@ export default function Inventory() {
             type="search"
             placeholder="Search by name or SKU…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         {categories.length > 0 && (
           <select
             value={filters.category}
-            onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
+            onChange={(e) => { setFilters((f) => ({ ...f, category: e.target.value })); setPage(1) }}
             className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           >
             <option value="">All Categories</option>
@@ -334,14 +336,14 @@ export default function Inventory() {
           <input
             type="checkbox"
             checked={filters.lowStock}
-            onChange={(e) => setFilters((f) => ({ ...f, lowStock: e.target.checked }))}
+            onChange={(e) => { setFilters((f) => ({ ...f, lowStock: e.target.checked })); setPage(1) }}
             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           Low stock only
         </label>
         {(search || filters.category || filters.lowStock) && (
           <button
-            onClick={() => { setSearch(''); setFilters({ category: '', lowStock: false }) }}
+            onClick={() => { setSearch(''); setFilters({ category: '', lowStock: false }); setPage(1) }}
             className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
           >
             <X size={12} /> Clear
@@ -434,9 +436,27 @@ export default function Inventory() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 mt-2 text-right">
-        Showing {filtered.length} of {products.length} product{products.length !== 1 ? 's' : ''}
-      </p>
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-xs text-gray-400">
+          Page {page} · {filtered.length} of {products.length} product{products.length !== 1 ? 's' : ''} on this page
+        </p>
+        <div className="flex gap-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            ← Prev
+          </button>
+          <button
+            disabled={products.length < PAGE_SIZE}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
 
       {/* Modals */}
       {showAdd && <AddProductModal onClose={() => setShowAdd(false)} />}

@@ -3,17 +3,20 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth import verify_token
 from app.database import get_db
 from app.models.inventory import Product, InventoryTransaction
 from app.schemas.inventory import ProductCreate, ProductUpdate, ProductOut, TransactionCreate, TransactionOut
 
-router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
+router = APIRouter(prefix="/api/inventory", tags=["Inventory"], dependencies=[Depends(verify_token)])
 
 
 @router.get("/products", response_model=List[ProductOut])
 def list_products(
     category: Optional[str] = Query(None),
     low_stock: Optional[bool] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
     query = db.query(Product)
@@ -21,7 +24,7 @@ def list_products(
         query = query.filter(Product.category == category)
     if low_stock:
         query = query.filter(Product.current_stock <= Product.reorder_point)
-    return query.order_by(Product.name).all()
+    return query.order_by(Product.name).offset(skip).limit(limit).all()
 
 
 @router.post("/products", response_model=ProductOut, status_code=201)
