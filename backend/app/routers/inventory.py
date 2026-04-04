@@ -3,12 +3,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.auth import verify_token
 from app.database import get_db
 from app.models.inventory import Product, InventoryTransaction
 from app.schemas.inventory import ProductCreate, ProductUpdate, ProductOut, TransactionCreate, TransactionOut
 
-router = APIRouter(prefix="/api/inventory", tags=["Inventory"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
 
 
 @router.get("/products", response_model=List[ProductOut])

@@ -1,16 +1,12 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
-import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
 import Shipments from './pages/Shipments'
 import Forecasting from './pages/Forecasting'
 import AIAssistant from './pages/AIAssistant'
 
-function AppLayout() {
-  const { token } = useAuth()
-  if (!token) return <Navigate to="/login" replace />
+export default function App() {
   return (
     <Layout>
       <Routes>
@@ -21,14 +17,5 @@ function AppLayout() {
         <Route path="/ai" element={<AIAssistant />} />
       </Routes>
     </Layout>
-  )
-}
-
-export default function App() {
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/*" element={<AppLayout />} />
-    </Routes>
   )
 }

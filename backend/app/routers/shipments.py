@@ -6,12 +6,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.auth import verify_token
 from app.database import get_db
 from app.models.shipment import Shipment, ShipmentEvent
 from app.schemas.shipment import ShipmentCreate, ShipmentUpdate, ShipmentOut, ShipmentEventCreate, ShipmentEventOut
 
-router = APIRouter(prefix="/api/shipments", tags=["Shipments"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/shipments", tags=["Shipments"])
 
 
 def generate_tracking_number() -> str:

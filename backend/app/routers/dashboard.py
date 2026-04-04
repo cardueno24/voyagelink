@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.auth import verify_token
 from app.database import get_db
 from app.models.shipment import Shipment
 from app.models.inventory import Product
 
-router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 
 @router.get("/metrics")

@@ -3,14 +3,13 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import verify_token
 from app.database import get_db
 from app.models.inventory import AIConversation, Product, InventoryTransaction
 from app.schemas.inventory import ChatRequest
 from app.services.ai_service import chat_completion, settings
 from app.services.forecast_service import generate_forecast
 
-router = APIRouter(prefix="/api/ai", tags=["AI"], dependencies=[Depends(verify_token)])
+router = APIRouter(prefix="/api/ai", tags=["AI"])
 
 
 @router.post("/chat")
