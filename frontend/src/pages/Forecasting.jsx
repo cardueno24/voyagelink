@@ -50,20 +50,15 @@ function buildWeeklyVolume(transactions) {
 function buildProjection(transactions, currentStock, reorderPoint, leadTimeDays) {
   const issues = transactions.filter((tx) => tx.transaction_type === 'issue')
   const totalIssued = issues.reduce((sum, tx) => sum + Math.abs(tx.quantity), 0)
-
   let daySpan = 1
   if (transactions.length > 1) {
     const timestamps = transactions.map((tx) => new Date(tx.timestamp).getTime())
     daySpan = Math.max(1, (Math.max(...timestamps) - Math.min(...timestamps)) / 86400000)
   }
-
   const avgDaily = totalIssued / daySpan
   const today = new Date()
   const points = []
-
   for (let i = 0; i <= 30; i++) {
-    const d = new Date(today)
-    d.setDate(d.getDate() + i)
     points.push({
       day: i === 0 ? 'Today' : `Day ${i}`,
       projected: Math.max(0, Math.round(currentStock - avgDaily * i)),
@@ -71,7 +66,6 @@ function buildProjection(transactions, currentStock, reorderPoint, leadTimeDays)
       safetyBuffer: leadTimeDays ? Math.round(avgDaily * leadTimeDays) : null,
     })
   }
-
   return { points, avgDaily: avgDaily.toFixed(1) }
 }
 
@@ -80,8 +74,8 @@ function buildProjection(transactions, currentStock, reorderPoint, leadTimeDays)
 function ChartTooltip({ active, payload, label, unit = 'units' }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-xs">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-[#0D1525] border border-[#1E2D4A] rounded-lg shadow-xl px-3 py-2 text-xs">
+      <p className="font-semibold text-white mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }}>
           {p.name}: <span className="font-semibold">{p.value} {unit}</span>
@@ -95,10 +89,10 @@ function ChartTooltip({ active, payload, label, unit = 'units' }) {
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-[#0D1525] rounded-xl border border-[#1A2540] p-5">
       <div className="mb-4">
-        <p className="text-sm font-semibold text-gray-800">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <p className="text-sm font-semibold text-slate-200">{title}</p>
+        {subtitle && <p className="text-xs text-slate-600 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -109,7 +103,7 @@ function ChartCard({ title, subtitle, children }) {
 
 function EmptyChart({ message = 'No transaction history yet' }) {
   return (
-    <div className="flex items-center justify-center h-40 text-gray-300 text-sm">
+    <div className="flex items-center justify-center h-40 text-slate-700 text-sm">
       {message}
     </div>
   )
@@ -129,14 +123,11 @@ export default function Forecasting() {
     () => buildStockHistory(transactions, product?.current_stock ?? 0),
     [transactions, product?.current_stock]
   )
-
   const weeklyVolume = useMemo(() => buildWeeklyVolume(transactions), [transactions])
-
   const { points: projectionPoints, avgDaily } = useMemo(
-    () =>
-      product
-        ? buildProjection(transactions, product.current_stock, product.reorder_point, product.lead_time_days)
-        : { points: [], avgDaily: '—' },
+    () => product
+      ? buildProjection(transactions, product.current_stock, product.reorder_point, product.lead_time_days)
+      : { points: [], avgDaily: '—' },
     [transactions, product]
   )
 
@@ -147,140 +138,102 @@ export default function Forecasting() {
     resetForecast()
   }
 
+  const axisStyle = { fontSize: 10, fill: '#475569' }
+
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Demand Forecasting</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Visualize stock trends and generate AI-powered forecasts</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Demand Forecasting</h1>
+          <p className="text-sm text-slate-600 mt-0.5">Visualize stock trends and generate AI-powered forecasts</p>
         </div>
       </div>
 
       {/* Product selector */}
       <div className="mb-6">
         {loadingProducts ? (
-          <div className="h-10 w-72 bg-gray-100 animate-pulse rounded-lg" />
+          <div className="h-10 w-72 bg-[#0D1525] animate-pulse rounded-xl" />
         ) : (
           <div className="relative inline-block">
             <select
               value={selectedId}
               onChange={handleProductChange}
-              className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-72 cursor-pointer"
+              className="appearance-none bg-[#0D1525] border border-[#1E2D4A] rounded-xl pl-4 pr-10 py-2.5 text-sm font-medium text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/60 transition-all min-w-72 cursor-pointer [color-scheme:dark]"
             >
               <option value="">Select a product…</option>
               {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku})
-                </option>
+                <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
               ))}
             </select>
-            <ChevronDown
-              size={14}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
           </div>
         )}
       </div>
 
-      {/* No selection state */}
       {!selectedId && (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-300">
-          <TrendingUp size={48} className="mb-4 opacity-40" />
-          <p className="text-sm font-medium text-gray-400">Select a product to view its forecast</p>
+        <div className="flex flex-col items-center justify-center py-24 text-slate-700">
+          <TrendingUp size={48} className="mb-4 opacity-30" />
+          <p className="text-sm font-medium text-slate-600">Select a product to view its forecast</p>
         </div>
       )}
 
-      {/* Loading product */}
       {selectedId && loadingProduct && <LoadingSpinner message="Loading product data…" />}
 
-      {/* Product loaded */}
       {selectedId && product && (
         <>
-          {/* Low stock alert */}
           {isLowStock && (
-            <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-lg mb-6 text-sm">
-              <AlertTriangle size={15} />
+            <div className="flex items-center gap-2 bg-amber-900/20 border border-amber-800/40 text-amber-400 px-4 py-3.5 rounded-xl mb-6 text-sm">
+              <AlertTriangle size={15} className="text-amber-500" />
               <span>
                 <strong>{product.name}</strong> is below its reorder point ({product.reorder_point} units).
               </span>
             </div>
           )}
 
-          {/* Metric cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <MetricCard
-              label="Current Stock"
-              value={product.current_stock}
-              sub="units on hand"
-              color={isLowStock ? 'red' : 'blue'}
-            />
-            <MetricCard
-              label="Reorder Point"
-              value={product.reorder_point}
-              sub="units threshold"
-              color="yellow"
-            />
-            <MetricCard
-              label="Lead Time"
-              value={`${product.lead_time_days}d`}
-              sub={product.supplier ?? 'supplier'}
-              color="gray"
-            />
-            <MetricCard
-              label="Avg Daily Use"
-              value={transactions.length ? `${avgDaily} u/day` : '—'}
-              sub={transactions.length ? 'based on history' : 'no history yet'}
-              color="gray"
-            />
+            <MetricCard label="Current Stock" value={product.current_stock} sub="units on hand" color={isLowStock ? 'red' : 'blue'} />
+            <MetricCard label="Reorder Point" value={product.reorder_point} sub="units threshold" color="yellow" />
+            <MetricCard label="Lead Time" value={`${product.lead_time_days}d`} sub={product.supplier ?? 'supplier'} color="gray" />
+            <MetricCard label="Avg Daily Use" value={transactions.length ? `${avgDaily} u/day` : '—'} sub={transactions.length ? 'based on history' : 'no history yet'} color="gray" />
           </div>
 
-          {/* Charts row: Stock History + Weekly Volume */}
+          {/* Charts row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {/* Stock History – 2/3 width */}
-            <ChartCard
-              title="Stock Level History"
-              subtitle="Reconstructed from transaction log"
-              className="md:col-span-2"
-            >
+            <ChartCard title="Stock Level History" subtitle="Reconstructed from transaction log" className="md:col-span-2">
               <div className="md:col-span-2">
-                {stockHistory.length < 2 ? (
-                  <EmptyChart />
-                ) : (
+                {stockHistory.length < 2 ? <EmptyChart /> : (
                   <ResponsiveContainer width="100%" height={200}>
                     <AreaChart data={stockHistory} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={36} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1A2540" />
+                      <XAxis dataKey="date" tick={axisStyle} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                      <YAxis tick={axisStyle} tickLine={false} axisLine={false} width={36} />
                       <Tooltip content={<ChartTooltip />} />
-                      <ReferenceLine y={product.reorder_point} stroke="#f59e0b" strokeDasharray="4 3" label={{ value: 'Reorder', fontSize: 9, fill: '#f59e0b' }} />
-                      <Area type="monotone" dataKey="stock" name="Stock" stroke="#2563eb" strokeWidth={2} fill="url(#stockGrad)" dot={false} activeDot={{ r: 4 }} />
+                      <ReferenceLine y={product.reorder_point} stroke="#F59E0B" strokeDasharray="4 3" label={{ value: 'Reorder', fontSize: 9, fill: '#F59E0B' }} />
+                      <Area type="monotone" dataKey="stock" name="Stock" stroke="#3B82F6" strokeWidth={2} fill="url(#stockGrad)" dot={false} activeDot={{ r: 4, fill: '#3B82F6' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
               </div>
             </ChartCard>
 
-            {/* Weekly Volume */}
             <ChartCard title="Weekly Transaction Volume" subtitle="Receipts vs. issues by week">
-              {weeklyVolume.length === 0 ? (
-                <EmptyChart />
-              ) : (
+              {weeklyVolume.length === 0 ? <EmptyChart /> : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={weeklyVolume} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="week" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={36} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A2540" vertical={false} />
+                    <XAxis dataKey="week" tick={axisStyle} tickLine={false} axisLine={false} />
+                    <YAxis tick={axisStyle} tickLine={false} axisLine={false} width={36} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                    <Bar dataKey="receipts" name="Receipts" fill="#22c55e" radius={[3, 3, 0, 0]} maxBarSize={24} />
-                    <Bar dataKey="issues" name="Issues" fill="#ef4444" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                    <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 8, color: '#64748B' }} />
+                    <Bar dataKey="receipts" name="Receipts" fill="#10B981" radius={[3, 3, 0, 0]} maxBarSize={24} />
+                    <Bar dataKey="issues" name="Issues" fill="#EF4444" radius={[3, 3, 0, 0]} maxBarSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -289,24 +242,21 @@ export default function Forecasting() {
 
           {/* 30-Day Projection */}
           <div className="mb-6">
-            <ChartCard
-              title="30-Day Stock Projection"
-              subtitle={`Estimated at ${avgDaily} units/day based on transaction history`}
-            >
+            <ChartCard title="30-Day Stock Projection" subtitle={`Estimated at ${avgDaily} units/day based on transaction history`}>
               {projectionPoints.length === 0 || transactions.length === 0 ? (
                 <EmptyChart message="No transaction history to project from" />
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={projectionPoints} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={4} />
-                    <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={36} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1A2540" />
+                    <XAxis dataKey="day" tick={axisStyle} tickLine={false} axisLine={false} interval={4} />
+                    <YAxis tick={axisStyle} tickLine={false} axisLine={false} width={36} />
                     <Tooltip content={<ChartTooltip />} />
-                    <ReferenceLine y={product.reorder_point} stroke="#f59e0b" strokeDasharray="4 3" label={{ value: 'Reorder point', fontSize: 9, fill: '#f59e0b', position: 'insideTopRight' }} />
+                    <ReferenceLine y={product.reorder_point} stroke="#F59E0B" strokeDasharray="4 3" label={{ value: 'Reorder point', fontSize: 9, fill: '#F59E0B', position: 'insideTopRight' }} />
                     {projectionPoints[0]?.safetyBuffer != null && (
-                      <ReferenceLine y={projectionPoints[0].safetyBuffer} stroke="#a78bfa" strokeDasharray="4 3" label={{ value: 'Safety buffer', fontSize: 9, fill: '#a78bfa', position: 'insideBottomRight' }} />
+                      <ReferenceLine y={projectionPoints[0].safetyBuffer} stroke="#8B5CF6" strokeDasharray="4 3" label={{ value: 'Safety buffer', fontSize: 9, fill: '#8B5CF6', position: 'insideBottomRight' }} />
                     )}
-                    <Line type="monotone" dataKey="projected" name="Projected stock" stroke="#2563eb" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="projected" name="Projected stock" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#3B82F6' }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -314,18 +264,18 @@ export default function Forecasting() {
           </div>
 
           {/* AI Forecast */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-[#0D1525] rounded-xl border border-[#1A2540] p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm font-semibold text-gray-800">AI Demand Forecast</p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-sm font-semibold text-slate-200">AI Demand Forecast</p>
+                <p className="text-xs text-slate-600 mt-0.5">
                   Powered by AI — analyzes transaction history to generate a 30-day forecast
                 </p>
               </div>
               <button
                 onClick={() => runForecast(product.id)}
                 disabled={forecastLoading}
-                className="flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                className="flex items-center gap-2 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-500 disabled:opacity-50 transition-colors shadow-[0_0_16px_rgba(37,99,235,0.2)]"
               >
                 <Cpu size={14} />
                 {forecastLoading ? 'Generating…' : forecastResult ? 'Regenerate' : 'Generate Forecast'}
@@ -333,22 +283,22 @@ export default function Forecasting() {
             </div>
 
             {forecastLoading && (
-              <div className="flex items-center gap-3 text-sm text-gray-400 py-6 justify-center">
-                <span className="inline-block w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+              <div className="flex items-center gap-3 text-sm text-slate-600 py-6 justify-center">
+                <span className="inline-block w-4 h-4 border-2 border-[#1A2540] border-t-blue-500 rounded-full animate-spin" />
                 Analyzing transaction data…
               </div>
             )}
 
             {!forecastLoading && forecastResult && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+              <div className="bg-[#111827] rounded-xl p-4 border border-[#1A2540]">
+                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
                   {forecastResult.forecast}
                 </pre>
               </div>
             )}
 
             {!forecastLoading && !forecastResult && (
-              <div className="flex items-center justify-center py-10 text-gray-300">
+              <div className="flex items-center justify-center py-10 text-slate-700">
                 <p className="text-sm">Click "Generate Forecast" to get an AI-powered demand analysis</p>
               </div>
             )}
